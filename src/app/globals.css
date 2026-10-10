@@ -1,0 +1,447 @@
+@import "tailwindcss";
+
+/* Dark mode is driven by the data-theme attribute on <html>, set by the inline
+   script in components/shell/theme-script.tsx before first paint. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens — the only place raw colours live.
+   Contrast for every text/background pair was verified (WCAG AA).
+   ───────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+  --canvas: #faf9f3;
+  --surface: #fffefb;
+  --surface-2: #f0efe5;
+  --line: #e4e2d6;
+  --line-strong: #bdbaa9;
+  --fg: #1b1b18;
+  --muted: #5a5850;
+  --subtle: #6e6c62;
+  --accent: #b93f23;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(185 63 35 / 0.09);
+  --focus: #b93f23;
+  --scrim: rgb(27 27 24 / 0.38);
+  --shadow-pop: 0 18px 50px -12px rgb(27 27 24 / 0.28), 0 2px 8px rgb(27 27 24 / 0.08);
+
+  --sidebar-w: 17.5rem;
+  --topbar-h: 3.5rem;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #161615;
+  --surface: #1c1c1a;
+  --surface-2: #252523;
+  --line: #2c2c29;
+  --line-strong: #46463f;
+  --fg: #f1f0e5;
+  --muted: #aaa89c;
+  --subtle: #96948a;
+  --accent: #ef7f61;
+  --accent-ink: #1a0f0b;
+  --accent-soft: rgb(239 127 97 / 0.12);
+  --focus: #ef7f61;
+  --scrim: rgb(0 0 0 / 0.55);
+  --shadow-pop: 0 18px 50px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+:root[data-sidebar="collapsed"] {
+  --sidebar-w: 0rem;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+/* ───────── Base ───────── */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--topbar-h) + 1.25rem);
+  -webkit-text-size-adjust: 100%;
+}
+@media (min-width: 1024px) {
+  html {
+    scroll-padding-top: 2rem;
+  }
+}
+
+body {
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+/* In the base layer so utilities such as outline-none can deliberately override it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Smooth theme change — the class is added only for the moment of a toggle. */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    fill 0.25s ease,
+    stroke 0.25s ease !important;
+}
+
+/* Thin, unobtrusive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* ───────── Layout shell ───────── */
+.shell-sidebar {
+  width: 17.5rem;
+  transition:
+    transform 0.22s var(--ease),
+    visibility 0s linear 0s;
+}
+:root[data-sidebar="collapsed"] .shell-sidebar {
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform 0.22s var(--ease),
+    visibility 0s linear 0.22s;
+}
+.shell-main {
+  transition: padding-left 0.22s var(--ease);
+}
+@media (min-width: 1024px) {
+  .shell-main {
+    padding-left: var(--sidebar-w);
+  }
+}
+.sidebar-open-btn {
+  display: none;
+}
+/* On desktop the sidebar carries brand/search/theme, so the docs header only shows when it is collapsed. */
+@media (min-width: 1024px) {
+  .docs-topbar {
+    display: none;
+  }
+  :root[data-sidebar="collapsed"] .docs-topbar {
+    display: block;
+  }
+  :root[data-sidebar="collapsed"] .sidebar-open-btn {
+    display: inline-flex;
+  }
+}
+
+/* ───────── Native <dialog> surfaces (search + mobile drawer) ───────── */
+dialog {
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 0;
+  max-width: none;
+  max-height: none;
+}
+dialog::backdrop {
+  background: var(--scrim);
+}
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.search-dialog {
+  width: min(40rem, calc(100vw - 1.5rem));
+  max-height: min(34rem, calc(100dvh - 1.5rem));
+  margin: 0.75rem auto auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .search-dialog {
+    margin-top: 12vh;
+  }
+}
+.search-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-dialog {
+  width: min(20rem, 88vw);
+  height: 100dvh;
+  margin: 0 auto 0 0;
+  border-width: 0 1px 0 0;
+  border-radius: 0;
+  box-shadow: var(--shadow-pop);
+}
+.drawer-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .search-dialog,
+  .drawer-dialog,
+  dialog::backdrop {
+    transition:
+      opacity 0.16s ease,
+      transform 0.2s var(--ease),
+      overlay 0.2s allow-discrete,
+      display 0.2s allow-discrete;
+  }
+  .search-dialog {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+  }
+  .search-dialog[open] {
+    opacity: 1;
+    transform: none;
+  }
+  .drawer-dialog {
+    transform: translateX(-100%);
+  }
+  .drawer-dialog[open] {
+    transform: none;
+  }
+  dialog::backdrop {
+    opacity: 0;
+  }
+  dialog[open]::backdrop {
+    opacity: 1;
+  }
+  @starting-style {
+    .search-dialog[open] {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.985);
+    }
+    .drawer-dialog[open] {
+      transform: translateX(-100%);
+    }
+    dialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
+}
+
+/* ───────── Documentation prose ───────── */
+.prose-doc > * + * {
+  margin-top: 1.1rem;
+}
+.prose-doc p,
+.prose-doc li {
+  color: color-mix(in srgb, var(--fg) 88%, var(--canvas));
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.prose-doc h2 {
+  margin-top: 2.75rem;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 5rem;
+}
+.prose-doc h3 {
+  margin-top: 2rem;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 5rem;
+}
+.prose-doc h2 + *,
+.prose-doc h3 + * {
+  margin-top: 0.85rem;
+}
+.prose-doc ul,
+.prose-doc ol {
+  padding-left: 1.35rem;
+}
+.prose-doc ul {
+  list-style: disc;
+}
+.prose-doc ol {
+  list-style: decimal;
+}
+.prose-doc li + li {
+  margin-top: 0.4rem;
+}
+.prose-doc li::marker {
+  color: var(--subtle);
+}
+.prose-doc a:not(.no-prose-link) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+.prose-doc a:not(.no-prose-link):hover {
+  text-decoration-color: currentColor;
+}
+.prose-doc strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.inline-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.1em 0.4em;
+  color: var(--fg);
+  white-space: break-spaces;
+}
+
+.heading-anchor {
+  margin-left: 0.5rem;
+  color: var(--subtle);
+  text-decoration: none !important;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+h2:hover .heading-anchor,
+h3:hover .heading-anchor,
+.heading-anchor:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .heading-anchor {
+    opacity: 0.55;
+  }
+}
+
+/* ───────── Tables ───────── */
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.doc-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+.doc-table th,
+.doc-table td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.doc-table tr:last-child td {
+  border-bottom: 0;
+}
+.doc-table td {
+  color: color-mix(in srgb, var(--fg) 88%, var(--canvas));
+}
+
+/* ───────── Code blocks (shiki, dual theme via CSS variables) ───────── */
+.code-scroll pre {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  background: transparent !important;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+.code-scroll code {
+  font-family: inherit;
+}
+.code-scroll .shiki span {
+  color: var(--shiki-light);
+}
+:root[data-theme="dark"] .code-scroll .shiki span {
+  color: var(--shiki-dark);
+}
+.code-scroll .shiki {
+  color: var(--fg);
+}
+
+/* ───────── Misc ───────── */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  padding: 0.28rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Gentle entrance for page content; skipped for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .rise-in {
+    animation: rise-in 0.4s var(--ease) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
